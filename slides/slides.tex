@@ -1,0 +1,392 @@
+\documentclass{beamer}
+
+\usepackage{fontspec}
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\setmonofont{CMU Typewriter Text}
+
+\usepackage{graphicx}
+
+\usepackage{polyglossia}
+\setmainlanguage[babelshorthands=true]{russian}
+
+\usepackage{minted}
+\usepackage[svgnames]{xcolor}
+\setminted{autogobble=true, bgcolor=Beige, bgcolorpadding=0.2em}
+
+\usepackage{subcaption}
+
+\newcommand\comment[1]{\textcolor{magenta}{\textit{{#1}}}}
+
+\usepackage{xspace}
+\newcommand\cpp{C\texttt{++}\xspace}
+
+\usepackage{minted}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linktoc=all,
+    linkcolor=black,
+}
+\urlstyle{same}
+
+\usetheme{Madrid}
+\usecolortheme{beaver}
+
+\title{Линковка в C\texttt{++}}
+\author{Сениченков Пётр}
+\date{2026}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Что такое линковка}
+
+\begin{frame}{Линковка}
+    \emph{Линковка} "--- это этап сборки, на котором отдельные единицы трансляции
+    (\emph{translation unit}), единицы подстановки шаблонов
+    (\emph{instantiation unit}) и внешние библиотеки собираются в исполняемый файл или
+    библиотеку (\emph{program image}).
+
+    \footnotetext{\url{https://github.com/p-senichenkov/cpp-linking-talk}}
+
+    \pause
+    \begin{quote}
+        All external entity references are resolved.
+        Library components are linked to satisfy external references to entities not defined in the
+        current translation.
+        All such translator output is collected into a program image which contains information
+        needed for execution in its execution environment.
+    \end{quote}
+    \begin{quote}
+        \raggedleft
+        ISO/IEC 14882:2020, 5.2, translation phase 9
+    \end{quote}
+\end{frame}
+
+\begin{frame}{Немного терминологии}
+    Чтобы не запутаться, будем использовать не совсем стандартные термины (если не очевидно, о чём
+    идёт речь):
+    \begin{itemize}
+        \item Compile-time
+            \begin{itemize}
+                \item \textbf{Компоновка}
+                \item 9 фаза трансляции
+                \item Link-editor
+            \end{itemize}
+        \item Runtime
+            \begin{itemize}
+                \item \textbf{Системный интерпретатор}
+                \item \texttt{ld.so}
+                \item Runtime linker
+                \item Dynamic linker/loader
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Что делает линкер}
+    \begin{itemize}
+        \item Разрешение символов
+        \item Объединение секций
+        \item Address relocation
+        \item Подключение динамических библиотек
+            \pause
+            \begin{itemize}
+                \item Position independent code (PIC)
+                \item Compile-time
+                    \begin{itemize}
+                        \item Создаются Global offset table (GOT) и Procedure linkage table (PLT)
+                        \item Заполняются динамические секции ELF
+                    \end{itemize}
+                \item Runtime
+                    \begin{itemize}
+                        \item Запускается \texttt{ld.so <executable>}
+                        \item Находит библиотеки из \texttt{DT\textunderscore NEEDED}, обходит их
+                            рекурсивно и загружает
+                        \item Заполняет адреса в GOT
+                        \item При первом вызове заполняется PLT
+                    \end{itemize}
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\section{Особенности линковки в \cpp}
+
+\begin{frame}{Storage duration, linkage, visibility}
+    \begin{itemize}
+        \item Storage duration
+            \begin{itemize}
+                \item Static
+                \item Thread
+                \item Automatic
+                \item Dynamic
+            \end{itemize}
+        \item Linkage
+            \begin{itemize}
+                \item No linkage
+                \item Internal
+                \item External
+                    \begin{itemize}
+                        \item Language
+                    \end{itemize}
+                \item Module
+            \end{itemize}
+        \item Visibility
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Name mangling, language linkage}
+    \begin{itemize}
+        \item Name mangling
+        \item Language linkage
+            \begin{itemize}
+                \item \mintinline[bgcolor=white]{C++}{extern "C++"}
+                \item \mintinline[bgcolor=white]{C++}{extern "C"}
+                \begin{itemize}
+                    \item Отключает name mangling
+                \end{itemize}
+            \item Реализации могут поддерживать другие языки
+                \begin{itemize}
+                    \item На практике это не используется
+                \end{itemize}
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Name mangling, language linkage}
+    \begin{minted}[mathescape]{C++}
+        int foo(double, long);            // $ \to $ _Z3foodl
+        extern "C" int bar(double, long); // $ \to $ bar
+
+        extern "C" typedef void FUNC();
+        FUNC* baz;                        // $ \to $ baz
+        extern "C" FUNC* qux;             // $ \to $ qux
+
+        extern "C" {
+        struct C {
+            void mem(void (*)());         // $ \to $ _ZN1C3memEPFvvE
+        };
+        }
+
+        struct D {
+            void mem(void (*)());         // $ \to $ _ZN1D3memEPFvvE
+        };
+    \end{minted}
+\end{frame}
+
+\begin{frame}{ODR}
+    \begin{itemize}
+        \item \textbf{Не больше одного} определения в одной translation unit
+        \item \textbf{Ровно одно} определение для каждой не-\texttt{inline} функции или
+            \texttt{inline}-переменной, если она используется
+        \item \textbf{Полное} определение для каждого класса, если он используется
+        \item Для класса, \texttt{inline}-функции, \texttt{inline}-переменной, перечисления,
+            шаблона (но не полной специализации) разрешено несколько определений, если они
+            \textit{полностью совпадают} и определены в разных translation unit (модулях)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Глобальные переменные и copy relocation}
+    \begin{itemize}
+        \item Copy relocation
+            \begin{itemize}
+                \item Сам исполняемый файл обычно создаётся из position-dependent кода.
+                    Нельзя использовать GOT и PLT для разрешения адресов
+                \item Когда компоновщик видит ссылку на данные, определённые в разделяемом объекте,
+                    он создаёт пустую запись в \texttt{.bss}, того же размера, что и эти данные
+                \item Интерпретатор копирует данные в эти записи
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{ABI}
+    \begin{itemize}
+        \item Itanium C++ ABI\footnote{\url{https://itanium-cxx-abi.github.io/cxx-abi/abi.html}}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Шаблоны и линковка}
+    \begin{itemize}
+        \item Borland model
+            \begin{itemize}
+                \item Компилятор подставляет шаблоны там, где они используются
+                \item Линкер ``склеивает'' одинаковые подстановки
+                \item Нужно подменять линкер
+                \item Дольше компиляция
+            \end{itemize}
+            \pause
+        \item Cfront model
+            \begin{itemize}
+                \item Глобальный реестр подстановок
+                \item Можно использовать системный линкер
+                \item Гораздо сложнее в реализации
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Виртуальные функции}
+    \begin{itemize}
+        \item \comment{TODO: виртуальные функции в контексте линковки}
+        \item vtable размещается в объектном файле, который содержит \emph{key function}
+            \begin{quote}
+                Key function is defined as the first non-inline, non-pure, virtual function declared
+                in the class. If you do not provide a definition for the key function (or fail to
+                link to the file providing the definition) then the linker will not be able to find
+                the class' vtable.
+            \end{quote}
+            \begin{itemize}
+                \item Если \textbf{не объявлено} ни одной не-inline, не чистой, виртуальной функции,
+                    то компилятор сгенерирует vtable в каждой TU, которая ссылается на
+                    этот класс (в секции COMDAT)
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{LTO}
+    \begin{itemize}
+        \item Компилятор записывает промежуточное представление (GIMPLE, LLVM bitcode) в объектные
+            файлы
+        \item Link-time optimizer читает промежуточное представление и работает вместе с линкером
+            \begin{itemize}
+                \item Линкер подключает \texttt{liblto\textunderscore plugin.so} или \texttt{libLTO.so}
+            \end{itemize}
+        \pause
+        \item В основном, те же оптимизации, что и при компиляции, но оптимизатор видит несколько
+            TU:
+            \begin{itemize}
+                \item Cross-module inlining
+                \item Dead code elimination
+                \item Devirtualization
+                \item Identical code folding
+                \item Code layout optimization
+                \item \texttt{COMDAT} folding
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\section{Линковка в Rust}
+
+\begin{frame}{Линковка в Rust}
+    \comment{Основное отличие от \cpp в том, что основная единица сборки "--- это crate, а не
+    translation unit.
+    Соответственно, компилятор больше знает о структуре программы.}
+\end{frame}
+
+\begin{frame}[fragile]{Name mangling и ABI}
+    \comment{Тоже есть mangling, и ABI тоже нестабильный.
+    Тоже есть pub extern ``C''.}
+
+    \comment{Чтобы выставить функцию из Rust наружу, используем}
+
+    \begin{minted}[autogobble=true]{rust}
+        #[unsafe(no_mangle)]
+        pub extern "C" fn callable_from_c(x: i32) -> bool {
+            x % 3 == 0
+        }
+    \end{minted}
+\end{frame}
+
+\section{Линковка в go}
+
+\begin{frame}{Линковка в Go}
+    \comment{А что тут говорить?
+    В целом, ситуация примерно та же, что и в rust.}
+\end{frame}
+
+\begin{frame}[fragile]{Inter-language linking in Go}
+    \begin{minted}{go}
+        package pkg
+
+        // #cgo LDFLAGS: -lpthread
+        // #include <stdio.h>
+        // void myprintf(char* s) { printf("%s\n", s); }
+        import "C"
+        import "unsafe"
+
+        //export MyFunction
+        func MyFunction(arg1, arg2 int) int64 {...}
+
+        func main() {
+            cs := C.CString("Hellow from stdio")
+            C.myprint(cs)
+            C.free(unsafe.Pointer(cs))
+        }
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Как это выглядит в коде}
+    \begin{itemize}
+        \item Псевдо-пакет \texttt{"C"}
+        \item Комментарий перед \texttt{import "C"} содержит
+            \begin{itemize}
+                \item Флаги для компиляторов
+                    (\mintinline[bgcolor=white]{go}{// #cgo <environmental variable>})
+                \item Общий заголовок для сгенерированного кода на C
+            \end{itemize}
+        \item Экспорт функций с помощью комментария \mintinline[bgcolor=white]{go}{//export <name>}
+        \item Обращение к переменным и функциям C через \mintinline[bgcolor=white]{go}{C.<name>}
+        \item Не все возможности C поддерживаются
+            \begin{itemize}
+                \item Variadic функции
+                \item Вызов функции по указателю
+            \end{itemize}
+        \item Нужно постоянно приводить типы
+        \item Хрупкая работа с указателями
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Как это работает}
+    \begin{itemize}
+        \item Вызывается не компилятор, а \texttt{go tool cgo}
+        \item Собирает все исходники C, \cpp и Fortran в текущей директории
+            \begin{itemize}
+                \item Но не в поддиректориях
+            \end{itemize}
+        \item Генерирует несколько файлов на C и Go и собирает их
+            \begin{itemize}
+                \item Экспортируемые файлы на C для подключения из внешних программ
+                \item Обёртки над использованными функциями на C
+                \item Исходный файл на Go с подставленными типами и именами из псевдо-модуля
+                    \texttt{"C"}
+                \item Вспомогательные файлы с обёртками над типами, некоторыми статическими
+                    проверками, etc.
+                \item Подробнее "--- в репозитории с примерами
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\section{Системы сборки}
+
+\begin{frame}[fragile]{Системы конфигурации и сборки для \cpp}
+    \begin{itemize}
+        \item Системы сборки
+            \begin{itemize}
+                \item Просто запускают команды
+                \item topsort
+            \end{itemize}
+        \item Системы конфигурации
+            \begin{itemize}
+                \item Мало знают о структуре программы
+            \end{itemize}
+    \end{itemize}
+
+    \pause
+    \begin{minted}{cpp}
+        // main.cpp
+        #include "lib.h"
+    \end{minted}
+    \begin{minted}{cmake}
+        # CMakeLists.txt
+        add_executable(MyProgram main.cpp)
+        target_link_libraries(MyProgram MyLibrary)
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Системы сборки для Rust и go}
+    \comment{Специфичны для конкретного языка.
+    Больше знают о структуре программы.
+    Нет бойлерплейта с указанием зависимостей "--- могут найти по коду.}
+\end{frame}
+
+\end{document}
