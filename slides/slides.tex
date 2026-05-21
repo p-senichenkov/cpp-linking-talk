@@ -249,7 +249,8 @@
             файлы
         \item Link-time optimizer читает промежуточное представление и работает вместе с линкером
             \begin{itemize}
-                \item Линкер подключает \texttt{liblto\textunderscore plugin.so} или \texttt{libLTO.so}
+                \item Линкер подключает \texttt{liblto\textunderscore plugin.so} или
+                    \texttt{libLTO.so}
             \end{itemize}
         \pause
         \item В основном, те же оптимизации, что и при компиляции, но оптимизатор видит несколько
@@ -268,18 +269,45 @@
 \section{Линковка в Rust}
 
 \begin{frame}{Линковка в Rust}
-    \comment{Основное отличие от \cpp в том, что основная единица сборки "--- это crate, а не
-    translation unit.
-    Соответственно, компилятор больше знает о структуре программы.}
+    \begin{itemize}
+        \item Единица компиляции "--- crate
+        \item Экспорт символов через модули, а не текстовые подстановки
+        \item Name mangling
+            \begin{itemize}
+                \item Содержит имя и хэш crate
+            \end{itemize}
+        \item Нет стабильного ABI
+        \item \texttt{rlib} содержит дополнительные метаданные
+            \begin{itemize}
+                \item Версия компилятора
+                \item Crate id
+                \item Информация об исходных файлах
+                \item Информация об экспортированных символах
+                \item Mid-level IR
+                \item LLVM bitcode
+            \end{itemize}
+        \item Generic monomorphization
+    \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Name mangling и ABI}
-    \comment{Тоже есть mangling, и ABI тоже нестабильный.
-    Тоже есть pub extern ``C''.}
+\begin{frame}[fragile]{Rust foreign function interface}
+    \begin{itemize}
+        \item C ABI
+        \item unsafe
+            \begin{itemize}
+                \item Линковка в runtime
+                \item Коллизии имён без mangling
+            \end{itemize}
+    \end{itemize}
 
-    \comment{Чтобы выставить функцию из Rust наружу, используем}
+    \begin{minted}{rust}
+        #[link(name = "my_c_library")]
+        unsafe extern "C" {
+            fn my_c_function(x: i32) -> bool;
+        }
+    \end{minted}
 
-    \begin{minted}[autogobble=true]{rust}
+    \begin{minted}{rust}
         #[unsafe(no_mangle)]
         pub extern "C" fn callable_from_c(x: i32) -> bool {
             x % 3 == 0
@@ -290,8 +318,18 @@
 \section{Линковка в go}
 
 \begin{frame}{Линковка в Go}
-    \comment{А что тут говорить?
-    В целом, ситуация примерно та же, что и в rust.}
+    \begin{itemize}
+        \item Единица сборки "--- package
+            \begin{itemize}
+                \item Export data и метаданные
+            \end{itemize}
+        \item В основном используется внутренний линкер
+        \item Self-contained binary
+            \begin{itemize}
+                \item Динамические библиотеки практически не используются
+            \end{itemize}
+        \item Относительно стабильный ABI
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Inter-language linking in Go}
@@ -384,9 +422,24 @@
 \end{frame}
 
 \begin{frame}[fragile]{Системы сборки для Rust и go}
-    \comment{Специфичны для конкретного языка.
-    Больше знают о структуре программы.
-    Нет бойлерплейта с указанием зависимостей "--- могут найти по коду.}
+    \begin{itemize}
+        \item Cargo
+            \begin{itemize}
+                \item Package manager
+                \item Build orchestrator
+                \item Структура проекта стандартизирована
+                    \begin{itemize}
+                        \item \texttt{Cargo.toml}
+                        \item \texttt{src/main.rs} или \texttt{src/lib.rs}
+                    \end{itemize}
+            \end{itemize}
+        \item Go toolchain
+            \begin{itemize}
+                \item Единый toolchain, тесно интегрированный в сам язык
+                \item Build graph $ \leftrightsquigarrow $ import graph
+                \item Разработчик практически не контролирует сборку
+            \end{itemize}
+    \end{itemize}
 \end{frame}
 
 \end{document}
