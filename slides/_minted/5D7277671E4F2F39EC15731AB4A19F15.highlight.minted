@@ -1,0 +1,5 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{c}{\PYGZsh{} CMakeLists.txt}
+\PYG{n+nb}{add\PYGZus{}executable}\PYG{p}{(}\PYG{l+s}{MyProgram}\PYG{+w}{ }\PYG{l+s}{main.cpp}\PYG{p}{)}
+\PYG{n+nb}{target\PYGZus{}link\PYGZus{}libraries}\PYG{p}{(}\PYG{l+s}{MyProgram}\PYG{+w}{ }\PYG{l+s}{MyLibrary}\PYG{p}{)}
+\end{MintedVerbatim}

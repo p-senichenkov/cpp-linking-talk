@@ -1,0 +1,18 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{package}\PYG{+w}{ }\PYG{n+nx}{pkg}
+
+\PYG{c+c1}{// \PYGZsh{}cgo LDFLAGS: \PYGZhy{}lpthread}
+\PYG{c+c1}{// \PYGZsh{}include \PYGZlt{}stdio.h\PYGZgt{}}
+\PYG{c+c1}{// void myprintf(char* s) \PYGZob{} printf(\PYGZdq{}\PYGZpc{}s\PYGZbs{}n\PYGZdq{}, s); \PYGZcb{}}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}C\PYGZdq{}}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}unsafe\PYGZdq{}}
+
+\PYG{c+c1}{//export MyFunction}
+\PYG{k+kd}{func}\PYG{+w}{ }\PYG{n+nx}{MyFunction}\PYG{p}{(}\PYG{n+nx}{arg1}\PYG{p}{,}\PYG{+w}{ }\PYG{n+nx}{arg2}\PYG{+w}{ }\PYG{k+kt}{int}\PYG{p}{)}\PYG{+w}{ }\PYG{k+kt}{int64}\PYG{+w}{ }\PYG{p}{\PYGZob{}}\PYG{o}{...}\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kd}{func}\PYG{+w}{ }\PYG{n+nx}{main}\PYG{p}{()}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n+nx}{cs}\PYG{+w}{ }\PYG{o}{:=}\PYG{+w}{ }\PYG{n+nx}{C}\PYG{p}{.}\PYG{n+nx}{CString}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Hellow from stdio\PYGZdq{}}\PYG{p}{)}
+\PYG{+w}{    }\PYG{n+nx}{C}\PYG{p}{.}\PYG{n+nx}{myprint}\PYG{p}{(}\PYG{n+nx}{cs}\PYG{p}{)}
+\PYG{+w}{    }\PYG{n+nx}{C}\PYG{p}{.}\PYG{n+nx}{free}\PYG{p}{(}\PYG{n+nx}{unsafe}\PYG{p}{.}\PYG{n+nx}{Pointer}\PYG{p}{(}\PYG{n+nx}{cs}\PYG{p}{))}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

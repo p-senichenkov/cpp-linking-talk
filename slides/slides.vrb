@@ -1,0 +1,19 @@
+\frametitle{Системы сборки для Rust и go}
+\begin{itemize}
+        \item Cargo
+            \begin{itemize}
+                \item Package manager
+                \item Build orchestrator
+                \item Структура проекта стандартизирована
+                    \begin{itemize}
+                        \item \texttt{Cargo.toml}
+                        \item \texttt{src/main.rs} или \texttt{src/lib.rs}
+                    \end{itemize}
+            \end{itemize}
+        \item Go toolchain
+            \begin{itemize}
+                \item Единый toolchain, тесно интегрированный в сам язык
+                \item Build graph $ \leftrightsquigarrow $ import graph
+                \item Разработчик практически не контролирует сборку
+            \end{itemize}
+    \end{itemize}

@@ -1,0 +1,18 @@
+\begin{MintedVerbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n+nf}{foo}\PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{long}\PYG{p}{);}\PYG{+w}{            }\PYG{c+c1}{// $ \to $ \PYGZus{}Z3foodl}
+\PYG{k}{extern}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}C\PYGZdq{}}\PYG{+w}{ }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{bar}\PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{long}\PYG{p}{);}\PYG{+w}{ }\PYG{c+c1}{// $ \to $ bar}
+
+\PYG{k}{extern}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}C\PYGZdq{}}\PYG{+w}{ }\PYG{k}{typedef}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n}{FUNC}\PYG{p}{();}
+\PYG{n}{FUNC}\PYG{o}{*}\PYG{+w}{ }\PYG{n}{baz}\PYG{p}{;}\PYG{+w}{                        }\PYG{c+c1}{// $ \to $ baz}
+\PYG{k}{extern}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}C\PYGZdq{}}\PYG{+w}{ }\PYG{n}{FUNC}\PYG{o}{*}\PYG{+w}{ }\PYG{n}{qux}\PYG{p}{;}\PYG{+w}{             }\PYG{c+c1}{// $ \to $ qux}
+
+\PYG{k}{extern}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}C\PYGZdq{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{k}{struct}\PYG{+w}{ }\PYG{n+nc}{C}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{mem}\PYG{p}{(}\PYG{k+kt}{void}\PYG{+w}{ }\PYG{p}{(}\PYG{o}{*}\PYG{p}{)());}\PYG{+w}{         }\PYG{c+c1}{// $ \to $ \PYGZus{}ZN1C3memEPFvvE}
+\PYG{p}{\PYGZcb{};}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{struct}\PYG{+w}{ }\PYG{n+nc}{D}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{mem}\PYG{p}{(}\PYG{k+kt}{void}\PYG{+w}{ }\PYG{p}{(}\PYG{o}{*}\PYG{p}{)());}\PYG{+w}{         }\PYG{c+c1}{// $ \to $ \PYGZus{}ZN1D3memEPFvvE}
+\PYG{p}{\PYGZcb{};}
+\end{MintedVerbatim}
